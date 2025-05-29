@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Ngữ pháp N2 Matching Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+    }
+    .structure {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      font-weight: bold;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #f0f0f0;
+    }
+    .correct {
+      border-color: #28a745 !important;
+      color: #101110;
+      background: #28a745 !important;
+    }
+    .wrong {
+      background: #d14551 !important;
+      border-color: #b91526 !important;
+      color: #0a0a0a;
+    }
+    #nextBtn {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      display: none;
+    }
+    .example {
+      font-size: 1rem;
+      color: #020101;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div id="progress" style="margin-bottom: 1rem; font-size: 1.1rem; font-weight: bold;"></div>
+  <div class="example" id="example"></div>
+  <div class="container">
+    <div class="structure" id="structure"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn">Next</button>
+  </div>
+
+  <script>
+    const data = [
+    { structure: '引く ひく', meaning: 'Kéo', ex: '・このドアは、引いてください。Hãy kéo cái cửa này đi.'},
+{ structure: '注ぐ つぐ', meaning: 'Đổ (nước v.v…)', ex: '・コップに牛乳をつぐ。Đổ sữa vào cốc'},
+{ structure: '注ぐ そそぐ', meaning: 'Đổ ra, rót, dồn hết', ex: '・グラスにビールを注ぐ。Đổ bia vào cốc thuỷ tinh.'},
+{ structure: 'まく まく', meaning: '- Gieo (hạt), tưới (nước) - Phân phát', ex: '・ハトにえさをまく。Rải thức ăn cho bồ câu.'},
+{ structure: '酔う よう', meaning: '- Say rượu - Say (tàu, xe) - Say sưa, chìm trong...', ex: '・⾧時間バスに乗っていたので、酔った。Bị say xe do ngồi xe buýt quá lâu.'},
+{ structure: '凹む へこむ', meaning: '- Lõm - Buồn, suy sụp', ex: '・車をぶつけて、ドアがへこんでしまった。Do đâm xe nên cửa bị lõm vào.'},
+{ structure: '齧る かじる', meaning: '- Cắn, gặm - (Làm, biết v.v…) sơ sơ, không chuyên sâu', ex: '・パンをかじりながら自転車に乗る。Vừa gặm bánh mì vừa chạy xe đạp'},
+{ structure: '躓く つまずく', meaning: '- Ngã, vấp ngã - Thất bại', ex: '・小さな石につまずいて転んだ。Vấp phải hòn đá nhỏ mà ngã.'},
+{ structure: '頷く うなずく', meaning: 'Gật đầu', ex: '・彼女はいつもうなずいて人の話を聞いている。 Cô ấy lúc nào cũng gật gù nghe người khác nói chuyện.'},
+{ structure: 'しゃがむ しゃがむ', meaning: 'Ngồi xổm', ex: '・しゃがんで子供と同じ目線で話す。 Ngồi xuống cùng con nói chuyện trên cùng một quan điểm.'},
+{ structure: '溢れる あふれる', meaning: 'Tràn, đầy', ex: '・鍋からお湯があふれる。Nước nóng từ nồi tràn ra.'},
+{ structure: '溺れる おぼれる', meaning: '- Chết đuối - Ngập vào, chìm vào (tệ nạn)', ex: '・人生で１度だけ海でおぼれた。 Cuộc đời tôi từng suýt chết đuối ở biển một lần.'},
+{ structure: '可愛がる かわいがる', meaning: 'Yêu mến', ex: '・私の家族は犬のポチを本当に可愛がっている。 Gia đình tôi rất chiều chuộng chú chó Pochi.'},
+{ structure: 'がっかりする がっかりする', meaning: 'Thất vọng', ex: '・テストの結果にがっかりする。 Thất vọng vì kết quả bài kiểm tra.'},
+{ structure: 'どく どく', meaning: '- Dẹp, tránh qua một bên (tự động từ)', ex: '・ちょっと、どいてくれない？ Tránh giùm 1 chút được không?'},
+{ structure: 'どける どける', meaning: '- Dẹp qua một bên (tha động từ)', ex: '・箱をどけると、金庫があった。 Dẹp đống hộp qua một bên thì thấy cái két sắt.'},
+{ structure: '儲かる もうかる', meaning: 'Có lợi nhuận', ex: '・あのラーメン屋、儲かってるみたいだよ。 Cửa hàng Ramen đó có vẻ đang ăn nên làm ra đấy.'},
+{ structure: '儲ける もうける', meaning: 'Kiếm lời', ex: '・株でお金を儲ける。Kiếm lời nhờ số cổ phần.'},
+{ structure: '解ける ほどける', meaning: '- Tuột, được cởi bỏ - Được giải phóng', ex: '・靴ひもがほどける。Tuột dây giày.'},
+{ structure: '解く ほどく', meaning: 'Cởi bỏ, tháo (chỉ các vật có mối thắt nút)', ex: '・エプロンの紐をほどく。Cởi dây tạp dề.'},
+{ structure: '被る かぶる', meaning: '- Đội (mũ) - Tràn, đổ - Chịu, nhận (trách nhiệm, ...)', ex: '・帽子をかぶって外にでる。 Đội mũ rồi ra ngoài.'},
+{ structure: '被せる かぶせる', meaning: '- Che - Đổ (nước v.v...) - Quy, đổ, vu (trách nhiệm, tội)', ex: '・罪をかぶせられた。Bị đổ tội.'},
+{ structure: '潰れる つぶれる', meaning: '- Bẹp, nát - Hỏng, đổ vỡ - Phá sản (công ty) - Lãng phí (thời gian)', ex: '・よく行っていたラーメン屋さんがつぶれて しまった。 Cửa hàng Ramen tôi hay lui tới đã sập tiệm rồi.'},
+{ structure: '潰す つぶす', meaning: '- Nghiền nát, phá hỏng - Làm phá sản - Làm lãng phí', ex: '・いちごを潰していちごミルクを作る。 Nghiền dâu tây ra làm sữa dâu.'},
+{ structure: '掘る ほる', meaning: 'Đào, khai quật', ex: '・穴を掘ったら、温泉が出てきた。 Sau khi đào lỗ bỗng thấy mạch nước nóng tuôn ra.'},
+{ structure: '打つ うつ', meaning: 'Đập, tung, bắn', ex: '・シュートを打つ。Tung cú sút.'},
+{ structure: '漕ぐ こぐ', meaning: 'Chèo, lái, đạp (thuyền, xe)', ex: '・人生で初めてカヌーをこいだ。 Lần đầu tiên trong đời tôi chèo xuồng.'},
+{ structure: '敷く しく', meaning: 'Trải ra', ex: '・テーブルクロスを敷いて食事の 準備をする。 Trải khăn bàn ra chuẩn bị cho bữa ăn.'},
+{ structure: '発つ たつ', meaning: 'Khởi hành, rời khỏi', ex: '・列車が駅を発つ。Đoàn tàu rời ga.'},
+{ structure: '突く つく', meaning: '- Chọc, đâm - Đóng dấu - Khiến ngực đau nhói', ex: '・海に潜って、魚をやりで突く。 Lặn xuống nước, dùng giáo xiên cá.'},
+{ structure: '吐く はく', meaning: 'Thở ra, nôn ra', ex: '・気分が悪くて吐いてしまった。 Cảm thấy khó chịu và đã bị nôn.'},
+{ structure: '診る みる', meaning: 'Chẩn đoán', ex: '・熱があるので、医者に診てもらった。 Vì bị sốt nên đã đi khám bác sĩ.'},
+{ structure: '痛む いたむ', meaning: 'Đau', ex: '・最近、右の奥歯おくば が痛む。 Dạo gần đây răng hàm bên phải của tôi bị đau.'},
+{ structure: '傷む いたむ', meaning: 'Hư, hỏng (đồ ăn)', ex: '・このバナナはもう傷んでいるので捨てましょう。 Quả chuối này hỏng mất rồi, vứt đi thôi.'},
+{ structure: '見舞う みまう', meaning: '- Đi thăm bệnh - Gặp phải', ex: '・入院している友達のお見舞いに行く。 Đi thăm bệnh đứa bạn đang nhập viện.'},
+{ structure: '転ぶ ころぶ', meaning: 'Ngã', ex: '・足元が見えにくくて転んでしまった。 Vì mò mẫm không nhìn rõ bước chân nên đã bị ngã.'},
+{ structure: '測る / 計る / 量る はかる', meaning: 'Đo, do đạc, tính', ex: '・熱を測ると38.5度もあった。 Cặp nhiệt độ ra 38 độ 5.'},
+{ structure: '配る くばる', meaning: 'Phân phát', ex: '・駅の前でティシュを配っている。 Phát khăn giấy trước cửa ga.'},
+{ structure: '放る ほうる', meaning: 'Ném, bỏ mặc', ex: '・彼のことは放っておくことにした。 Quyết định mặc kệ anh ta.'},
+{ structure: '好む このむ', meaning: 'Yêu thích', ex: '・自然が豊かで、静かなところを好む。 Thích những nơi thiên nhiên phong phú và yên tĩnh.'},
+{ structure: '嫌う きらう', meaning: 'Ghét, không thích', ex: '・空気が悪くて、うるさい所を嫌っています。 Ghét những nơi không khí ô nhiễm và ồn ào.'},
+{ structure: '威張る いばる', meaning: 'Kiêu ngạo, hợm hĩnh', ex: '・彼はいつも威張っている。 Anh ta lúc nào tỏ ra hợm hĩnh.'},
+{ structure: '怒鳴る どなる', meaning: 'Hét lên, quát', ex: '・先生の怒鳴る声が廊下に響いた。 Tiếng quát của giáo viên vang xuống tận hành lang.'},
+{ structure: '願う ねがう', meaning: 'Ước, yêu cầu, mong muốn', ex: '・家族がみんな健康に過ごせることを願う。 Mong cho mọi người trong gia đình được sống khoẻ mạnh.'},
+{ structure: '気づく きづく', meaning: 'Nhận ra, ý thức, tỉnh', ex: '・彼の本当の気持ちに気づいた。 Nhận ra được cảm giác thực sự của anh ấy.'},
+{ structure: '稼ぐ かせぐ', meaning: 'Kiếm tiền Câu giờ', ex: '・お金をもっと稼いで、高級マンションに住み たい。'},
+{ structure: '刻む きざむ', meaning: '- Thái, xắt - Khắc', ex: '・指輪に、二人の名前を刻む。 Khắc tên hai người vào chiếc nhẫn.'},
+{ structure: '甘える あまえる', meaning: '- Nũng nịu, dựa dẫm - Nghe lời', ex: '・いつまでも親に甘えてないで、自立して ください。 Đừng có dựa dẫm mãi vào bố mẹ thế, tự lập đi chứ!'},
+{ structure: '疑う うたがう', meaning: 'Nghi ngờ', ex: '・テレビに映った光景に、一瞬目を疑った。 Trong thoáng chốc tôi đã không tin vào mắt mình 6 trước khung cảnh hiện ra trên TV.'},
+{ structure: '苦しむ くるしむ', meaning: 'Khổ, chịu đựng', ex: '・彼の行動は理解に苦しむ。 Thật khó để có thể lý giải hành động của anh ta.'},
+{ structure: '悲しむ かなしむ', meaning: 'Buồn', ex: '・有名なコメディアンの死に、日本中が悲しんだ。 Cả nước Nhật đau buồn trước cái chết của diễn viên hài nổi tiếng.'},
+{ structure: '励ます はげます', meaning: 'Động viên, cổ vũ', ex: '・本当にあなたのことを思って励ましてくれる友達 を大切にしよう。 Hãy trân trọng những người bạn biết nghĩ cho mình và luôn động viên mình.'},
+{ structure: '張り切る はりきる', meaning: 'Hăm hở, làm việc chăm chỉ', ex: '・明日は最後の試合なのでみんな張り切っている。 Do ngày mai là trận đấu cuối cùng nên mọi người đều đang rất hăng hái.'},
+{ structure: '暴れる あばれる', meaning: 'Quậy phá', ex: '・２歳の娘は、機嫌が悪いと泣きながら暴れる。 Đứa con gái 2 tuổi của tôi cứ tâm trạng không tốt là bắt đầu vừa khóc vừa quậy phá.'},
+{ structure: '占う うらなう', meaning: 'Dự đoán, bói', ex: '・タロットで恋愛運を占う。 Bói tình duyên bằng bài Tarot.'},
+{ structure: '引っ張る ひっぱる', meaning: 'Kéo Lôi kéo', ex: '・子供がお母さんの手を引っ張る。 Đứa con kéo tay người mẹ.'},
+{ structure: '近寄る ちかよる', meaning: 'Tiếp cận, tới gần', ex: '・おにぎりを食べているとカラスが近寄ってきた。 Đang ăn cơm nắm bỗng có con quạ tiến tới gần.'},
+{ structure: '横切る よこぎる', meaning: 'Băng qua', ex: '・注意して車道を横切る。 Để ý rồi băng qua đường xe chạy.'},
+{ structure: '突き当たる つきあたる', meaning: '- Đâm vào - Đi hết (con đường) - Vấp phải (vấn đề, khó khăn)', ex: '・突き当たりを右に曲がってください。 Hết đường thì rẽ phải.'},
+{ structure: '立ち止まる たち どまる', meaning: 'Dừng lại', ex: '・彼は突然立ち止まって、考え始めた。 Anh ta bỗng nhiên đứng lại và bắt đầu suy nghĩ.'},
+{ structure: '扱う あつかう', meaning: 'Đối xử - Xử lý - Sử dụng - Bán - Nêu lên', ex: '・子供服は３階で扱っております。 Quần áo trẻ em được bán trên tầng 3.'},
+{ structure: '目指す めざす', meaning: 'Nhắm tới, đặt mục tiêu', ex: '・優勝を目指して毎日練習に励んでいる。'},
+{ structure: '取り消す とりけす', meaning: 'Hủy bỏ', ex: '・私たちは婚約を取り消した。 Chúng tôi đã hủy bỏ hôn ước.'},
+{ structure: '余る あまる', meaning: 'Còn sót lại, dư ra', ex: '・時間が余ったので、カフェで時間を潰す。 Rỗi rãi nên tôi giết thời gian ở quán cà phê.'},
+{ structure: '目立つ めだつ', meaning: 'Nổi bật', ex: '・彼女はクラスの中で目立つ存在だった。 Cô ấy rất nổi bật trong lớp học.'},
+{ structure: '見下ろす みおろす', meaning: 'Nhìn xuống', ex: '・街全体を見下ろすことのできる高層マンションに 住みたい。 Muốn sống ở một căn hộ cao tầng nhìn xuống được toàn cảnh khu phố.'},
+{ structure: '戦う/闘 う たたかう', meaning: 'Chiến đấu, tranh đấu', ex: '・賞金をかけて、必死に戦った。 Đặt cược tiền thưởng và chiến đấu hết mình.'},
+{ structure: '輝く かがやく', meaning: 'Tỏa sáng, rạng rỡ', ex: '・彼女の指にはダイヤモンドの指輪が輝いていた。 Chiếc nhẫn kim cương trên ngón tay cô ấy toả sáng lấp lánh.'},
+{ structure: '支払う しはらう', meaning: 'Trả tiền', ex: '・毎月、現金で家賃を支払っている。 Hàng tháng tôi đều trả tiền nhà bằng tiền mặt.'},
+{ structure: '受け取る うけとる', meaning: 'Nhận Tiếp nhận', ex: '・母からの荷物を受け取った。Nhận đồ mẹ gửi'},
+{ structure: '払い込む はらいこむ', meaning: 'Đóng (tiền)', ex: '・月々の税金を払い込む。Đóng tiền thuế hàng tháng.'},
+{ structure: '払い戻す はらいもどす', meaning: 'Trả lại tiền', ex: '・不良品だったので、お店に持って行って払い戻し てもらった。 Vì là hàng lỗi nên tôi đã mang tới cửa hàng và được trả lại tiền.'},
+{ structure: '引き出す ひきだす', meaning: 'Rút ra', ex: '・ATMでお金を引き出す。 Rút tiền ở cây ATM.'},
+{ structure: '落ち込む おちこむ', meaning: '- Buồn chán, chán nản, suy sụp - Giảm - Rơi', ex: '・今月の売り上げがぐんと落ち込んでしまった。 Doanh thu tháng này đã sụt giảm đáng kể.'},
+{ structure: '売り切れ る うりきれる', meaning: 'Ý như là / Gần như là…', ex: '・クリームパンは売り切れてしまいました。 Bánh kem đã bán hết hàng rồi.'},
+{ structure: '挟む はさむ', meaning: 'Bán sạch, hết hàng', ex: '・パンにソーセージを挟んで食べる。 Kẹp xúc xích vào trong bánh mì rồi ăn.'},
+{ structure: '挟まる はさまる', meaning: 'Kẹp, chen vào giữa', ex: '・エレベーターのドアに足が挟まった。 Chân bị kẹt vào cửa thang máy.'},
+{ structure: '縮む ちぢむ', meaning: 'Bị co lại', ex: '・洗濯をしたら、お気に入りのセーターが縮んで しまった。 Sau khi giặt, cái áo len tôi thích bị co hết lại.'},
+{ structure: '縮まる ちぢまる', meaning: 'Bị ngắn lại', ex: '・去年より１センチ身⾧が縮まった。 So với năm ngoái thì chiều cao bị giảm mất 1 cm.'},
+{ structure: '縮める ちぢめる', meaning: '- Làm cho ngắn lại, rút ngắn khoảng cách', ex: '・彼女との距離を縮める。 Rút ngắn khoảng cách với cô ấy.'},
+{ structure: '沈む しずむ', meaning: 'Chìm, lặn, bị nhấn xuống', ex: '・太陽が沈むのをじっと見ていた。 Chăm chú xem mặt trời lặn.'},
+{ structure: '沈める しずめる', meaning: 'Làm chìm', ex: '・魚を取るための仕掛けを川の中に沈めておく。 Đặt bẫy bắt cá xuống lòng sông.'},
+{ structure: 'くっ付く くっつく', meaning: '- Đi kèm, dính liền, bám dính theo (tự động từ)', ex: '・靴の裏側にガムがくっついた。 Kẹo cao su bám dính vào đế giày.'},
+{ structure: 'くっ付け る くっつける', meaning: '- Để gần, cạnh nhau, dính vào, gắn liền vào v.v…. (tha)', ex: '・壊れた部分を接着剤でくっつける。 Dùng keo gắn những phần bị hỏng lại.'},
+{ structure: '固まる かたまる', meaning: '- Cứng lại - Tập trung, tụ lại - Chắc chắn vững chắc', ex: '・餅を冷蔵庫の中に入れたら、固まってしまった。 Cho bánh Mochi vào tủ lạnh sẽ làm chiếc bánh cứng lại.'},
+{ structure: '固める かためる', meaning: '- Làm cứng - Gom lại, tập trung lại - Củng cố', ex: '・冷蔵庫の中でゼリーを冷やして固めたら出来 上がりだ。 Cho thạch vào trong tủ lạnh, để lạnh và làm đông lại là món ăn sẽ hoàn thành.'},
+{ structure: '持てる もてる', meaning: '- Có thể cầm, mang - Thu hút, được yêu thích, có duyên', ex: '・彼はかっこよくて性格もいいので女の子から もてる。 Anh ta vừa đẹp trai lại tốt tính nên rất được các bạn gái ưa thích.'},
+{ structure: '例える たとえる', meaning: 'Ví như, so với', ex: '・彼の顔は、例えるとカエルに似ている。 Để mà so sánh thì cái mặt anh ta trông giống con ếch.'},
+{ structure: '努める つとめる', meaning: 'Nỗ lực, cố gắng', ex: '・日々、サービス向上に努めております。 Cố gắng mỗi ngày để nâng cao chất lượng dịch vụ.'},
+{ structure: '務める つとめる', meaning: 'Phục vụ, làm', ex: '・私はこの会社の社⾧を務めております。 Tôi đang đảm nhiệm vị trí giám đốc tại công ty này.'},
+{ structure: '務まる つとまる', meaning: 'Phù hợp, đảm đương được', ex: '・彼に学級委員が務まるだろうか。 Anh ta có lẽ sẽ đảm đương một vị trí trong ban cán sự lớp.'},
+{ structure: '呼びかけ る よびかける', meaning: 'Kêu gọi', ex: '・マスクをして外出するように呼びかける。 Kêu gọi ra đường đeo khẩu trang.'},
+{ structure: '呼び出す よびだす', meaning: 'Gọi, triệu tập', ex: '・先生から呼び出された。 Bị thầy giáo gọi.'},
+{ structure: '枯れる かれる', meaning: 'Bị héo, bị tàn', ex: '・大切に育てていた植物が枯れてしまった。 Cái cây mà tôi chăm bẵm đã bị héo mất rồi.'},
+{ structure: '枯らす からす', meaning: 'Làm héo, phơi khô', ex: '・毎日水をあげていなかったから、お花を枯らして しまった。 Vì tôi không tưới nước mỗi ngày nên đã làm cây hoa bị chết khô.'},
+{ structure: '湿る しめる', meaning: 'Bị ẩm', ex: '・空気が湿っていて洗濯物が乾きにくい。 Không khí ẩm nên đồ giặt khó khô.'},
+{ structure: '凍る こおる', meaning: 'Đông cứng', ex: '・寒すぎて鼻水はなみず も凍ってしまう。 Trời quá lạnh khiến nước mũi cũng phải đông cứng lại.'},
+{ structure: '震える ふるえる', meaning: 'Run rẩy', ex: '・寒すぎて手が震える。 Trời quá lạnh làm tay run rẩy.'},
+{ structure: 'はまる', meaning: '- Khớp - Mắc vào - Nghiện', ex: '・最近、海外ドラマを見ることにはまっている。 Dạo này tôi đâm đầu vào xem phim truyền hình nước ngoài.'},
+{ structure: 'はめる', meaning: '- Thắt, đặt lên - Lọt vào - Đặt vào - Lừa, đặt bẫy', ex: '・てぶくろをはめる。 Đeo găng tay.'},
+];
+function updateProgress() {
+  const total = data.length;
+  const learned = total - remainingIndices.length;
+  document.getElementById("progress").innerText = `Đã học: ${learned}/${total}`;
+}
+let remainingIndices = Array.from(data.keys()); // list of all indices
+  let current = {}, options = [];
+
+  function shuffle(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+  }
+
+  function pickQuestion() {
+    document.getElementById("nextBtn").style.display = "none";
+    document.getElementById("example").textContent = "";
+    if (remainingIndices.length === 0) {
+      document.getElementById("structure").innerText = "Hoàn thành trò chơi!";
+      document.getElementById("options").innerHTML = "";
+      return;
+    }
+
+    const idx = remainingIndices.splice(Math.floor(Math.random() * remainingIndices.length), 1)[0];
+    current = data[idx];
+    let wrong = shuffle(data.filter(d => d !== current && d.meaning !== current.meaning)).slice(0, 3);
+    options = shuffle([current, ...wrong]);
+
+    document.getElementById("structure").innerText = current.structure;
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.innerText = opt.meaning;
+      btn.onclick = () => handleAnswer(btn, opt.meaning === current.meaning);
+      optionsDiv.appendChild(btn);
+    });
+    updateProgress();
+  }
+
+  function handleAnswer(button, isCorrect) {
+    const exampleEl = document.getElementById("example");
+    const buttons = document.querySelectorAll("#options button");
+    buttons.forEach(btn => btn.disabled = true);
+    if (isCorrect) {
+      button.classList.add("correct");
+    } else {
+      button.classList.add("wrong");
+      buttons.forEach(btn => {
+        if (btn.innerText === current.meaning) btn.classList.add("correct");
+      });
+    }
+    exampleEl.textContent = `例文: ${current.ex}`;
+    document.getElementById("nextBtn").style.display = "inline-block";
+  }
+
+  document.getElementById("nextBtn").onclick = pickQuestion;
+  pickQuestion();
+  </script>
+</body>
+</html>
